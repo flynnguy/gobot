@@ -1,0 +1,14 @@
+# JIRA info...
+host:          https://jira.hostname.com
+api_path:      /rest/api/2
+activity_path: /activity
+login:         username_here
+password:      password_here
+
+# IRC info...
+irc_hostname:  irc.host.com:6667
+irc_pass:      irc_pass_here
+irc_username:  irc_username
+irc_nick:      irc_nick
+irc_nick_pass: nickserv_password
+irc_channels:  ["#channel_here"]
