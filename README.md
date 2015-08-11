@@ -1,6 +1,6 @@
 # gobot
 IRC bot written in go
-=====================
+---------------------
 
 Copy the example_config.yaml to config.yaml and edit to include your relevent information.
 
