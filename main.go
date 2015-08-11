@@ -93,6 +93,7 @@ func vimgurScrape(url string, messageCh chan string) {
 // scrapePage figures out what kind of page we're dealing with and calls the appropriate func.
 func scrapePage(url string, messageCh chan string) {
 	switch {
+    // Commented out youtube since we have another bot that does this in channel
 	//	case strings.Contains(url, "youtu.be"):
 	//		youtubeScrape(url, messageCh)
 	//	case strings.Contains(url, "youtube"):
