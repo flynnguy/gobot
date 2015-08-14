@@ -16,7 +16,7 @@ import (
 // Config struct to store configurable data in a yaml file
 type Config struct {
 	Host         string   `yaml:"host"`
-	ApiPath      string   `yaml:"api_path"`
+	APIPath      string   `yaml:"api_path"`
 	ActivityPath string   `yaml:"activity_path"`
 	Login        string   `yaml:"login"`
 	Password     string   `yaml:"password"`
@@ -29,21 +29,21 @@ type Config struct {
 }
 
 var (
-	imgur_ext_regex = regexp.MustCompile(`.*\.\w\w\wv?$`)
-	url_regex       = regexp.MustCompile(`\b(https?://?[\dA-Za-z\.-]+[/\w\.\+\?\:\;\#\&=-]*)`)
-	jira_regex      = regexp.MustCompile(`^https?://jira2.advance.net/browse/([a-zA-Z0-9-]+)?.*$`)
-	config          = new(Config)
+	imgurExtRegex = regexp.MustCompile(`.*\.\w\w\wv?$`)
+	urlRegex      = regexp.MustCompile(`\b(https?://?[\dA-Za-z\.-]+[/\w\.\+\?\:\;\#\&=-]*)`)
+	jiraRegex     = regexp.MustCompile(`^https?://jira2.advance.net/browse/([a-zA-Z0-9-]+)?.*$`)
+	config        = new(Config)
 )
 
 func jiraScrape(url string, messageCh chan string) {
 	jira := gojira.NewJira(
 		config.Host,
-		config.ApiPath,
+		config.APIPath,
 		config.ActivityPath,
 		&gojira.Auth{config.Login, config.Password},
 	)
-	if jira_regex.MatchString(url) {
-		match := jira_regex.FindStringSubmatch(url)[1]
+	if jiraRegex.MatchString(url) {
+		match := jiraRegex.FindStringSubmatch(url)[1]
 		log.Printf("Match: '%s'\n", match)
 		issue := jira.Issue(match)
 		//log.Printf("Jira: %#v\n", issue.Fields)
@@ -112,7 +112,7 @@ func scrapePage(url string, messageCh chan string) {
 		vimgurScrape(url, messageCh)
 	case strings.Contains(url, ".gifv"): // .gifv images are actually pages
 		vimgurScrape(url, messageCh)
-	case imgur_ext_regex.MatchString(url): // has an extension (ex. .jpg) but not a .gifv
+	case imgurExtRegex.MatchString(url): // has an extension (ex. .jpg) but not a .gifv
 		vimgurScrape(url[:len(url)-3]+"gifv", messageCh) // Remove the extension and add a .gifv which seems to work
 
 	case strings.Contains(url, "jira2.advance.net"):
@@ -135,6 +135,7 @@ func UnmarshalConfig(filename string) {
 	}
 }
 
+// ConnectIRC is used to connect to IRC
 func ConnectIRC() *irc.Connection {
 	con := irc.IRC(config.IRCNick, config.IRCUsername)
 	if config.IRCPass != "" {
@@ -147,7 +148,7 @@ func ConnectIRC() *irc.Connection {
 	return con
 }
 
-// 001 is the welcome even, join channels when we're logged in
+// WelcomeCallback is a PrivMsgCallback for the welcome event 001, join channels when we're logged in
 func WelcomeCallback(con *irc.Connection) {
 	con.AddCallback("001", func(e *irc.Event) {
 		con.Privmsgf("NickServ", "identify %s", config.IRCNickPass)
@@ -160,7 +161,7 @@ func WelcomeCallback(con *irc.Connection) {
 	})
 }
 
-// JOIN event happens whenever *anyone* joins
+// JoinCallback triggers on JOIN event which happens whenever *anyone* joins
 func JoinCallback(con *irc.Connection) {
 	con.AddCallback("JOIN", func(e *irc.Event) {
 		if e.Nick != config.IRCNick { // Exclude bot joins
@@ -171,7 +172,7 @@ func JoinCallback(con *irc.Connection) {
 	})
 }
 
-// PRIVMSG is really any message in IRC that the bot sees
+// PrivMsgCallback (PRIVMSG) is really any message in IRC that the bot sees
 func PrivMsgCallback(con *irc.Connection) {
 	con.AddCallback("PRIVMSG", func(e *irc.Event) {
 		message := e.Arguments[1]
@@ -179,7 +180,7 @@ func PrivMsgCallback(con *irc.Connection) {
 		log.Printf("%s said: %s\n", e.Nick, message)
 
 		// Look for urls in messages
-		urls := url_regex.FindAllString(message, -1)
+		urls := urlRegex.FindAllString(message, -1)
 		if len(urls) > 0 {
 			for _, url := range urls {
 				messageCh := make(chan string, 1)
@@ -190,7 +191,7 @@ func PrivMsgCallback(con *irc.Connection) {
 	})
 }
 
-// Not sure if this actually works
+// ErrorCallback should log anytime an error happens
 func ErrorCallback(con *irc.Connection) {
 	con.AddCallback("ERROR", func(e *irc.Event) {
 		log.Printf("Error: %#v\n", e)
