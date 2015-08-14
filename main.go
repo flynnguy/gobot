@@ -68,14 +68,18 @@ func youtubeScrape(url string, messageCh chan string) {
 }
 
 // imgurScrape get's the title from a imgur album page.
+// This differs from vimgurScrape in the html container it's in
 func imgurScrape(url string, messageCh chan string) {
 	doc, err := goquery.NewDocument(url)
 	if err != nil {
 		log.Print(err)
 	}
 	doc.Find("div#content .album-description").Each(func(i int, s *goquery.Selection) {
-		log.Printf("Imgur: %s\n", strings.Trim(s.Find("h1").Text(), "\n "))
-		messageCh <- fmt.Sprintf("Imgur: %s\n", strings.Trim(s.Find("h1").Text(), "\n "))
+		title := strings.Trim(s.Find("h1").Text(), "\n ")
+		if title != "Imgur" {
+			log.Printf("Imgur: %s\n", title)
+			messageCh <- fmt.Sprintf("Imgur: %s\n", title)
+		}
 	})
 }
 
@@ -85,15 +89,18 @@ func vimgurScrape(url string, messageCh chan string) {
 		log.Print(err)
 	}
 	doc.Find("head title").Each(func(i int, s *goquery.Selection) {
-		log.Printf("Imgur: %s\n", strings.Trim(s.Text(), "\n "))
-		messageCh <- fmt.Sprintf("Imgur: %s\n", strings.Trim(s.Text(), "\n "))
+		title := strings.Trim(s.Text(), "\n ")
+		if title != "Imgur" {
+			log.Printf("Imgur: %s\n", title)
+			messageCh <- fmt.Sprintf("Imgur: %s\n", title)
+		}
 	})
 }
 
 // scrapePage figures out what kind of page we're dealing with and calls the appropriate func.
 func scrapePage(url string, messageCh chan string) {
 	switch {
-    // Commented out youtube since we have another bot that does this in channel
+	// Commented out youtube since we have another bot that does this in channel
 	//	case strings.Contains(url, "youtu.be"):
 	//		youtubeScrape(url, messageCh)
 	//	case strings.Contains(url, "youtube"):
